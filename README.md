@@ -17,6 +17,7 @@ Current results:
 - HistGradientBoosting: 81.6% ± 1.0% accuracy
 
 Random Forest is currently the leading model.
+The development and final holdout sets preserve nearly identical class proportions despite grouping by host star.
 
 
 ## Dataset
