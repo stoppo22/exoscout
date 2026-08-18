@@ -6,7 +6,7 @@ DATA_PATH = PROJECT_ROOT / "data" / "toi.csv"
 
 URL = (
     "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
-    "?query=select+toi,tfopwg_disp,pl_orbper,pl_trandurh,pl_trandep,"
+    "?query=select+toi,tid,tfopwg_disp,pl_orbper,pl_trandurh,pl_trandep,"
     "st_tmag,st_teff,st_logg,st_rad+from+toi"
     "&format=csv"
 )
