@@ -4,17 +4,20 @@ ExoScout is a machine learning project that uses NASA TESS Objects of Interest d
 
 ## Current Status
 
-v0.2 improves the original Logistic Regression baseline with more rigorous missing-data handling and evaluation.
+v0.3 compares linear and nonlinear model families under a group-aware evaluation protocol.
 
-Missingness analysis showed that some features are missing much more frequently among false positives than among confirmed/known planets. Instead of dropping incomplete rows, v0.2 uses median imputation while preserving missingness through binary indicators.
+Because multiple TOIs can belong to the same host star and share stellar properties, TIC ID (`tid`) is used to keep observations from the same star within the same data partition.
 
-The model is evaluated using 5-fold stratified cross-validation.
+A separate final holdout set remains untouched, while model comparison is performed using 5-fold stratified group cross-validation on the development set.
 
-Current performance:
-- Accuracy: 73.5% ± 1.7%
-- Planet precision: 72.4% ± 1.8%
-- Planet recall: 78.9% ± 3.4%
-- Planet F1-score: 75.5% ± 1.7%
+Current results:
+
+- Logistic Regression: 72.7% ± 0.7% accuracy
+- Random Forest: 82.2% ± 1.1% accuracy
+- HistGradientBoosting: 81.6% ± 1.0% accuracy
+
+Random Forest is currently the leading model.
+
 
 ## Dataset
 
@@ -47,22 +50,26 @@ exoscout/
 ```
 
 
-
 ## Current Limitations
 
-- Only Logistic Regression has been evaluated so far.
-- Missing values are imputed using a simple median strategy.
-- Current evaluation uses only tabular catalog features.
-- No feature importance or detailed error analysis has been performed yet.
+- Model comparison has been performed without substantial hyperparameter tuning.
+- Current models use only tabular catalog features.
+- Feature importance and detailed error analysis have not yet been performed.
+- The final holdout set has intentionally not yet been evaluated.
 - Raw TESS light curves are not yet used.
-
 
 ## Roadmap
 
-### v0.3
-- Compare Logistic Regression with tree-based models
+### v0.4
 - Analyze feature importance
+- Compute permutation importance
 - Perform detailed error analysis
+- Compare errors across model families
+
+### v0.5
+- Perform controlled hyperparameter tuning
+- Select the final tabular pipeline
+- Evaluate once on the untouched final holdout
 
 ### Future
 - Score unresolved Planet Candidates
