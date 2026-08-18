@@ -4,13 +4,17 @@ ExoScout is a machine learning project that uses NASA TESS Objects of Interest d
 
 ## Current Status
 
-v0.1 implements a Logistic Regression baseline using tabular features from the NASA Exoplanet Archive.
+v0.2 improves the original Logistic Regression baseline with more rigorous missing-data handling and evaluation.
 
-Baseline performance:
-- Accuracy: ~71.7%
-- Planet precision: ~73%
-- Planet recall: ~80%
-- Planet F1-score: ~76%
+Missingness analysis showed that some features are missing much more frequently among false positives than among confirmed/known planets. Instead of dropping incomplete rows, v0.2 uses median imputation while preserving missingness through binary indicators.
+
+The model is evaluated using 5-fold stratified cross-validation.
+
+Current performance:
+- Accuracy: 73.5% ± 1.7%
+- Planet precision: 72.4% ± 1.8%
+- Planet recall: 78.9% ± 3.4%
+- Planet F1-score: 75.5% ± 1.7%
 
 ## Dataset
 
@@ -46,18 +50,22 @@ exoscout/
 
 ## Current Limitations
 
-Missing rows are currently removed.
-Evaluation is based on a single train/test split.
-Only Logistic Regression has been tested.
-The project currently uses catalog features rather than raw TESS light curves.
+- Only Logistic Regression has been evaluated so far.
+- Missing values are imputed using a simple median strategy.
+- Current evaluation uses only tabular catalog features.
+- No feature importance or detailed error analysis has been performed yet.
+- Raw TESS light curves are not yet used.
 
 
 ## Roadmap
 
-Analyze missing-data patterns
-Add missing-value imputation
-Add cross-validation
-Compare multiple models
-Perform feature importance and error analysis
-Explore unresolved Planet Candidates
-Investigate TESS light curves
+### v0.3
+- Compare Logistic Regression with tree-based models
+- Analyze feature importance
+- Perform detailed error analysis
+
+### Future
+- Score unresolved Planet Candidates
+- Investigate probability calibration
+- Explore features extracted from TESS light curves
+- Build a lightweight interactive demo
