@@ -4,7 +4,7 @@ ExoScout is a machine learning project that uses NASA TESS Objects of Interest d
 
 ## Current Status
 
-v0.5 completes the controlled optimization and final evaluation of the tabular Random Forest pipeline.
+v0.5.1 adds a lightweight Streamlit inference demo around the frozen v0.5 model. The underlying modeling pipeline and final evaluation remain unchanged from v0.5.
 
 Because multiple TOIs can belong to the same host star and share stellar properties, TIC ID (`tid`) is used to keep observations from the same star within the same data partition.
 
@@ -219,6 +219,13 @@ The exported artifact was checked against three previously evaluated holdout obs
 * Froze the complete modeling procedure.
 * Evaluated once on the untouched final holdout.
 * Reached a final holdout F1-score of 86.0%.
+
+### v0.5.1
+
+* Exported the frozen v0.5 pipeline as a reusable model artifact.
+* Added validated inference logic outside the notebooks.
+* Added a lightweight Streamlit demonstration.
+* Added local execution instructions and an MIT License.
 
 ## Future Work
 

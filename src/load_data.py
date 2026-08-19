@@ -17,6 +17,10 @@ def load_data():
         df = pd.read_csv(DATA_PATH)
     else:
         df = pd.read_csv(URL)
+        DATA_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
         df.to_csv(DATA_PATH, index=False)
 
     return df
