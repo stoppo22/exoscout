@@ -53,6 +53,8 @@ The three leading configurations produced practically equivalent validation F1-s
 
 An unconstrained comparison forest produced trees as deep as 28, with 15.3% exceeding depth 20. This confirmed that the selected depth limit actively constrains part of the forest rather than acting as a cosmetic parameter.
 
+A post-hoc diagnostic using development out-of-fold probabilities found a maximum F1-score of 84.9% at a threshold of 0.47, compared with 84.5% at the frozen threshold of 0.5. Because the difference was modest and the diagnostic was performed after the final evaluation, the preregistered threshold and all reported holdout results remained unchanged.
+
 ## v0.4 Interpretability and Error Analysis
 
 - Out-of-fold permutation importance identified orbital period, transit duration, and transit depth as the strongest contributors to validation accuracy.
