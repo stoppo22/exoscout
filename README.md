@@ -1,240 +1,101 @@
-# ExoScout
+# 🪐 ExoScout
 
-ExoScout is a machine learning project that uses NASA TESS Objects of Interest data to distinguish confirmed and known exoplanets from catalog false positives.
+**Tells real exoplanets apart from catalog false positives in NASA TESS data.**
+A Random Forest trained on 7 catalog measurements — **86.0% F1 on a held-out set of stars the model had never seen**, wrapped in an interactive Streamlit demo.
 
-## Current Status
+![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9-F7931E?logo=scikitlearn&logoColor=white)
+![Streamlit demo](https://img.shields.io/badge/demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-black)
+![Holdout F1: 86.0%](https://img.shields.io/badge/holdout%20F1-86.0%25-4C6EF5)
 
-v0.5.1 adds a lightweight Streamlit inference demo around the frozen v0.5 model. The underlying modeling pipeline and final evaluation remain unchanged from v0.5.
+<!-- Add a screenshot of the running app here: docs/app.png
+![ExoScout Streamlit app](docs/app.png) -->
 
-Because multiple TOIs can belong to the same host star and share stellar properties, TIC ID (`tid`) is used to keep observations from the same star within the same data partition.
+## At a glance
 
-Model development uses five-fold `StratifiedGroupKFold` cross-validation on 2,077 development observations. A separate holdout containing 519 observations from previously unseen host stars was evaluated once after the complete modeling procedure had been frozen.
+- **Problem** — the NASA TESS Objects of Interest catalog is full of false positives (eclipsing binaries, noise, blends) that have to be vetted by hand.
+- **Approach** — a Random Forest on 7 tabular catalog features, with the train/test boundary drawn **between host stars** so no star leaks across it.
+- **Discipline** — feature set, pipeline, hyperparameters, metric and threshold were **frozen before** a 519-observation holdout was opened, and the holdout was scored **once**.
+- **Result** — 86.0% F1 on that holdout, in line with the group-aware development estimate.
 
-The repository also includes a lightweight Streamlit demonstration that loads the frozen v0.5 pipeline and classifies individual catalog observations without retraining the model.
+> ExoScout demonstrates a catalog *classifier*. It does not discover or confirm exoplanets, and its scores are **not** calibrated probabilities.
 
-### Final Model
-
-The final pipeline contains:
-
-* Median imputation
-* Missingness indicators
-* 500 Random Forest trees
-* Maximum tree depth of 20
-* Minimum of two observations per leaf
-* Square-root feature sampling at each split
-* Classification threshold of 0.5
-
-### Final Performance
+## Results
 
 | Evaluation set  | Accuracy | Precision | Recall | F1-score |
 | --------------- | -------: | --------: | -----: | -------: |
-| Development OOF |    83.2% |     81.1% |  88.1% |    84.5% |
-| Final holdout   |    85.2% |     83.7% |  88.4% |    86.0% |
+| Development OOF  |    83.2% |     81.1% |  88.1% |    84.5% |
+| Final holdout    |    85.2% |     83.7% |  88.4% |    86.0% |
 
-The final holdout confusion matrix contains:
+<p align="center">
+  <img src="docs/confusion_matrix.png" alt="Final holdout confusion matrix" width="49%">
+  <img src="docs/feature_importance.png" alt="Permutation importance" width="49%">
+</p>
 
-* 237 correctly identified planets
-* 205 correctly identified catalog false positives
-* 46 catalog false positives classified as planets
-* 31 missed planets
+The model leans on the **transit geometry** — duration, orbital period and depth —
+far more than on stellar properties, matching the out-of-fold analysis in v0.4.
 
-The final holdout result was consistent with, and slightly higher than, the group-aware development estimate. No modeling decision was changed after the holdout was evaluated.
+## Try it in 30 seconds
 
-## Interactive Demo
-
-The Streamlit application accepts the seven catalog measurements used by the model and returns:
-
-* A planet-like or catalog false-positive-like classification
-* The uncalibrated planet score produced by the Random Forest
-* The frozen classification threshold
-* A warning when missing measurements are imputed
-
-The application validates the inputs and rejects non-numeric text, infinite values, and non-positive values for physical quantities that must be greater than zero.
-
-The displayed score is not a calibrated probability that an observation is a real exoplanet. The application demonstrates the behavior of the existing catalog classifier; it does not discover or confirm exoplanets, retrain the model, or use final holdout observations.
-
-## Quickstart
-
-Python 3.13 is recommended.
+Python 3.13 recommended.
 
 ```bash
 git clone https://github.com/stoppo22/exoscout.git
 cd exoscout
 
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 
-python3 -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-On Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`.
+The app takes the seven catalog measurements and returns a planet-like /
+false-positive-like call, the uncalibrated Random Forest score, and the frozen
+threshold. Empty fields are treated as missing measurements and handled by the
+pipeline's median imputation and missingness indicators.
 
-The application will open in the browser. Empty fields are treated as missing catalog measurements and processed by the frozen preprocessing pipeline.
+## How it works
 
-## Model Optimization
+```mermaid
+flowchart LR
+    A[NASA TESS<br/>Objects of Interest] --> B[Keep CP / KP / FP<br/>drop unresolved PC]
+    B --> C[Group-aware split<br/>by host star TIC ID]
+    C --> D[Development<br/>2,077 obs]
+    C --> E[Final holdout<br/>519 obs · unseen stars]
+    D --> F[Pipeline:<br/>median impute + missingness flags<br/>→ Random Forest, 500 trees, depth 20]
+    F --> G[Freeze pipeline + threshold<br/>exoscout_v0_5.joblib]
+    G -->|scored once| E
+    G --> H[src/predict.py<br/>input validation]
+    H --> I[Streamlit app]
+```
 
-The original Random Forest achieved an out-of-fold F1-score of 83.5%.
+* **Notebooks** (`notebooks/`) — the research trail, v0.1 → v0.5, one notebook per stage.
+* **`src/predict.py`** — loads the frozen artifact, validates input (numeric, finite, positivity constraints per feature), builds the observation, returns the prediction.
+* **`app.py`** — the Streamlit interface.
 
-v0.5 evaluated 40 hyperparameter configurations across five group-aware folds, producing 200 cross-validation fits. The search varied:
-
-* Number of trees
-* Maximum tree depth
-* Minimum observations per leaf
-* Number of features considered at each split
-
-The three leading configurations produced practically equivalent validation F1-scores. A regularized candidate was selected before opening the holdout, favoring `min_samples_leaf=2` and `max_depth=20` while sacrificing less than one tenth of a percentage point in mean validation F1 relative to the highest-ranked configuration.
-
-An unconstrained comparison forest produced trees as deep as 28, with 15.3% exceeding depth 20. This confirmed that the selected depth limit actively constrains part of the forest rather than acting as a cosmetic parameter.
-
-A post-hoc diagnostic using development out-of-fold probabilities found a maximum F1-score of 84.9% at a threshold of 0.47, compared with 84.5% at the frozen threshold of 0.5. Because the difference was modest and the diagnostic was performed after the final evaluation, the preregistered threshold and all reported holdout results remained unchanged.
-
-## v0.4 Interpretability and Error Analysis
-
-* Out-of-fold permutation importance identified orbital period, transit duration, and transit depth as the strongest contributors to validation accuracy.
-* Impurity and permutation importance produced different rankings, showing that frequent internal use of a feature does not necessarily imply an equally strong contribution to generalization.
-* The untuned Random Forest produced 935 true positives, 773 true negatives, 231 false positives, and 138 false negatives across its out-of-fold predictions.
-* 65 Random Forest errors were made with confidence of at least 0.80, representing 17.6% of its errors.
-* All three model families misclassified 210 of the same observations. Of these shared errors, 151 were false positives and 59 were false negatives.
-* A simple majority-vote ensemble reached an F1-score of 83.1% and did not improve upon Random Forest.
-* The main shared limitation was distinguishing planet-like catalog false positives from genuine planets using the current feature set.
-
-## Dataset
-
-Data source: NASA Exoplanet Archive — TESS Objects of Interest (TOI).
-
-The current model uses:
-
-* Orbital period
-* Transit duration
-* Transit depth
-* TESS magnitude
-* Stellar effective temperature
-* Stellar surface gravity
-* Stellar radius
-
-Labels:
-
-* CP / KP → planet
-* FP → false positive
-
-Planet Candidates (PC) are excluded from training because their status is unresolved.
-
-`src/load_data.py` downloads the current TOI table when no cached local copy is available. The demonstration instead loads the fixed exported model artifact and does not require the dataset at runtime.
-
-## Project Structure
+## Project structure
 
 ```text
 exoscout/
-├── artifacts/
-│   └── exoscout_v0_5.joblib
-├── data/
-├── notebooks/
-│   ├── 01_baseline.ipynb
-│   ├── 02_missingness_and_cv.ipynb
-│   ├── 03_model_comparison.ipynb
-│   ├── 04_feature_and_error_analysis.ipynb
-│   └── 05_model_optimization_and_final_evaluation.ipynb
+├── artifacts/exoscout_v0_5.joblib     # frozen pipeline + metadata
+├── docs/METHODOLOGY.md                # full protocol, limitations, version history
+├── notebooks/                         # 01_baseline … 05_model_optimization_and_final_evaluation
 ├── src/
-│   ├── load_data.py
-│   └── predict.py
+│   ├── load_data.py                   # downloads / caches the TOI table
+│   └── predict.py                     # validated inference
 ├── app.py
-├── LICENSE
 ├── requirements.txt
 └── README.md
 ```
 
-## Inference Flow
+## Learn more
 
-The demonstration uses three components:
-
-* `artifacts/exoscout_v0_5.joblib` contains the frozen pipeline trained exclusively on the development set, together with its feature order, threshold, labels, and metadata.
-* `src/predict.py` loads the artifact, validates the input, constructs the required tabular observation, and obtains the model output.
-* `app.py` provides the Streamlit interface and displays the result.
-
-The exported artifact was checked against three previously evaluated holdout observations. Its scores and predicted labels matched the original notebook inference.
-
-## Evaluation Protocol
-
-* Observations are grouped by host star using TIC ID (`tid`).
-* Development and final holdout sets contain no shared host stars.
-* Model comparison and hyperparameter tuning use five-fold stratified group cross-validation.
-* Preprocessing is contained inside each model pipeline.
-* Imputation statistics are learned only from the relevant training fold during cross-validation.
-* F1-score is declared as the primary model-selection metric.
-* The classification threshold is fixed at 0.5.
-* Feature importance and error analysis use development data and out-of-fold predictions.
-* The final feature set, preprocessing pipeline, hyperparameters, metric, and threshold were frozen before the holdout was opened.
-* The final holdout was evaluated once and was not used to revise the pipeline.
-
-## Current Limitations
-
-* The current model uses only seven tabular catalog measurements.
-* The final Random Forest retains a substantial train–validation performance gap.
-* Repeated modeling decisions on the same development folds may introduce some model-selection bias.
-* The independent holdout contains 519 observations, so its metrics remain subject to sampling variation.
-* Feature importance describes predictive associations and does not establish causal astrophysical relationships.
-* Correlated features may share or redistribute their measured importance.
-* Predicted scores have not been calibrated and must not be interpreted as reliable probabilities.
-* Training uses only resolved CP, KP, and FP labels; unresolved Planet Candidates may represent a more difficult population.
-* Raw TESS light curves are not used.
-* The TOI catalog changes over time, so rerunning the notebooks against a later archive snapshot may not exactly reproduce the historical v0.5 metrics.
-* The original holdout has already been evaluated and cannot be treated as an untouched test set for future model revisions.
-
-## Version History
-
-### v0.1
-
-* Built the first Logistic Regression baseline.
-* Established the binary CP/KP versus FP task.
-
-### v0.2
-
-* Analyzed missing values by class.
-* Added median imputation and missingness indicators.
-* Introduced cross-validation and experiment tracking.
-
-### v0.3
-
-* Introduced group-aware splitting by host star.
-* Created an untouched final holdout.
-* Compared Logistic Regression, Random Forest, and HistGradientBoosting.
-* Selected Random Forest as the leading development model.
-
-### v0.4
-
-* Compared impurity and out-of-fold permutation importance.
-* Performed out-of-fold error and confidence analysis.
-* Compared error overlap across model families.
-* Tested and rejected a simple majority-vote ensemble.
-* Kept the final holdout untouched.
-
-### v0.5
-
-* Performed controlled group-aware hyperparameter optimization.
-* Compared the leading configurations fold by fold.
-* Selected a regularized final Random Forest pipeline.
-* Verified the effective depth of unconstrained trees.
-* Evaluated per-class out-of-fold performance.
-* Froze the complete modeling procedure.
-* Evaluated once on the untouched final holdout.
-* Reached a final holdout F1-score of 86.0%.
-
-### v0.5.1
-
-* Exported the frozen v0.5 pipeline as a reusable model artifact.
-* Added validated inference logic outside the notebooks.
-* Added a lightweight Streamlit demonstration.
-* Added local execution instructions and an MIT License.
-
-## Future Work
-
-* Investigate probability calibration before interpreting model scores as reliable probabilities.
-* Evaluate distribution shift before applying the model to unresolved Planet Candidates.
-* Explore additional physically motivated catalog features.
-* Extract features from TESS light curves.
-* Validate any future model revision using a new independent temporal or external evaluation set.
+**[docs/METHODOLOGY.md](docs/METHODOLOGY.md)** covers the evaluation protocol,
+hyperparameter search, interpretability and error analysis, the full limitations
+list, and the version history.
 
 ## License
 
-This project is available under the MIT License.
+MIT — see [LICENSE](LICENSE).
