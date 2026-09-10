@@ -42,10 +42,13 @@ never span a train/validation boundary.
 ## Evaluation protocol
 
 * Observations are grouped by host star using TIC ID (`tid`).
-* A single `StratifiedGroupKFold` split (5 folds, `random_state=42`) separates a
-  development set from a final holdout. The two sets share **no** host stars.
-* Model comparison and hyperparameter tuning use five-fold stratified group
-  cross-validation on the development set only.
+* The development / final-holdout partition is the **first fold** of a
+  `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`:
+  `next(splitter.split(X, y, groups))` yields the first test fold (~20% of
+  observations) as the holdout and the remaining four folds as the development
+  set. The two sets share **no** host stars.
+* Model comparison and hyperparameter tuning then use a fresh five-fold
+  stratified group cross-validation on the development set only.
 * Preprocessing lives inside each model `Pipeline`; imputation statistics are
   learned only from the training fold.
 * **F1-score** is the declared primary model-selection metric.

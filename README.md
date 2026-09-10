@@ -45,11 +45,19 @@ Python 3.13 recommended.
 git clone https://github.com/stoppo22/exoscout.git
 cd exoscout
 
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m streamlit run app.py
+```
 
+On **Windows (PowerShell)** use the `py` launcher and the venv activation script:
+
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 The app takes the seven catalog measurements and returns a planet-like /
