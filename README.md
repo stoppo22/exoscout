@@ -9,8 +9,9 @@ A Random Forest trained on 7 catalog measurements — **86.0% F1 on a held-out s
 ![License: MIT](https://img.shields.io/badge/license-MIT-black)
 ![Holdout F1: 86.0%](https://img.shields.io/badge/holdout%20F1-86.0%25-4C6EF5)
 
-<!-- Add a screenshot of the running app here: docs/app.png
-![ExoScout Streamlit app](docs/app.png) -->
+<p align="center">
+  <img src="docs/app.png" alt="ExoScout Streamlit app classifying an observation" width="620">
+</p>
 
 ## At a glance
 
